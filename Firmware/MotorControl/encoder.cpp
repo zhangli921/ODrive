@@ -43,7 +43,7 @@ void Encoder::setup() {
         .Mode = SPI_MODE_MASTER,
         .Direction = SPI_DIRECTION_2LINES,
         .DataSize = SPI_DATASIZE_16BIT,
-        .CLKPolarity = (mode_ == MODE_SPI_ABS_AEAT || mode_ == MODE_SPI_ABS_MA732) ? SPI_POLARITY_HIGH : SPI_POLARITY_LOW,
+        .CLKPolarity = (mode_ == MODE_SPI_ABS_AEAT || mode_ == MODE_SPI_ABS_MA732) ? SPI_POLARITY_HIGH : SPI_POLARITY_LOW, //!! 需确认设置
         .CLKPhase = SPI_PHASE_2EDGE,
         .NSS = SPI_NSS_SOFT,
         .BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16,
@@ -494,6 +494,7 @@ void Encoder::sample_now() {
         case MODE_SPI_ABS_AEAT:
         case MODE_SPI_ABS_RLS:
         case MODE_SPI_ABS_MA732:
+        case MODE_SPI_ABS_ICMU:  //!! 新增ICMU
         {
             abs_spi_start_transaction();
             // Do nothing
@@ -593,6 +594,12 @@ void Encoder::abs_spi_cb(bool success) {
         case MODE_SPI_ABS_MA732: {
             uint16_t rawVal = abs_spi_dma_rx_[0];
             pos = (rawVal >> 2) & 0x3fff;
+        } break;
+        
+        //!! IC-MU编码器的数据读取与解析代码请添加到此处
+        case MODE_SPI_ABS_ICMU: {
+            uint16_t rawVal = abs_spi_dma_rx_[0];  //!! 从spi读出数据
+            // pos = (rawVal >> 2) & 0x3fff;   //!! 此处需解析读到的数据，并存入变量pos中
         } break;
 
         default: {
@@ -732,7 +739,8 @@ bool Encoder::update() {
         case MODE_SPI_ABS_AMS:
         case MODE_SPI_ABS_CUI: 
         case MODE_SPI_ABS_AEAT:
-        case MODE_SPI_ABS_MA732: {
+        case MODE_SPI_ABS_MA732:
+        case MODE_SPI_ABS_ICMU: {
             if (abs_spi_pos_updated_ == false) {
                 // Low pass filter the error
                 spi_error_rate_ += current_meas_period * (1.0f - spi_error_rate_);
