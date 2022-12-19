@@ -86,6 +86,7 @@ void Axis::clear_config() {
     config_.step_gpio_pin = default_step_gpio_pin_;
     config_.dir_gpio_pin = default_dir_gpio_pin_;
     config_.can.node_id = axis_num_;
+    config_.uart.node_id = axis_num_; //!!
 }
 
 static void run_state_machine_loop_wrapper(void* ctx) {

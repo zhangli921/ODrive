@@ -57,6 +57,11 @@ public:
         uint32_t heartbeat_rate_ms = 100;
         uint32_t encoder_rate_ms = 10;
     };
+    
+    //!! 串口(485)id
+    struct UARTConfig_t {
+        uint32_t node_id = 0;    
+    };
 
     struct Config_t {
         bool startup_motor_calibration = false;   //<! run motor calibration at startup, skip otherwise
@@ -87,6 +92,7 @@ public:
         LockinConfig_t general_lockin;
 
         CANConfig_t can;
+        UARTConfig_t uart; //!!串口(485)配置
 
         // custom setters
         Axis* parent = nullptr;

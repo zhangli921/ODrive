@@ -131,16 +131,19 @@ void AsciiProtocol::process_line(cbufptr_t buffer) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_set_position(char * pStr, bool use_checksum) {
-    unsigned motor_number;
+    unsigned node_id;
     float pos_setpoint, vel_feed_forward, torque_feed_forward;
 
-    int numscan = sscanf(pStr, "p %u %f %f %f", &motor_number, &pos_setpoint, &vel_feed_forward, &torque_feed_forward);
+    int numscan = sscanf(pStr, "p %u %f %f %f", &node_id, &pos_setpoint, &vel_feed_forward, &torque_feed_forward);
+    
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
     if (numscan < 2) {
-        respond(use_checksum, "invalid command format");
-    } else if (motor_number >= AXIS_COUNT) {
-        respond(use_checksum, "invalid motor %u", motor_number);
-    } else {
-        Axis& axis = axes[motor_number];
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
+    } else {        
         axis.controller_.config_.control_mode = Controller::CONTROL_MODE_POSITION_CONTROL;
         axis.controller_.input_pos_ = pos_setpoint;
         if (numscan >= 3)
@@ -157,16 +160,19 @@ void AsciiProtocol::cmd_set_position(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_set_position_wl(char * pStr, bool use_checksum) {
-    unsigned motor_number;
+    unsigned node_id;
     float pos_setpoint, vel_limit, torque_lim;
 
-    int numscan = sscanf(pStr, "q %u %f %f %f", &motor_number, &pos_setpoint, &vel_limit, &torque_lim);
+    int numscan = sscanf(pStr, "q %u %f %f %f", &node_id, &pos_setpoint, &vel_limit, &torque_lim);
+    
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+    
     if (numscan < 2) {
-        respond(use_checksum, "invalid command format");
-    } else if (motor_number >= AXIS_COUNT) {
-        respond(use_checksum, "invalid motor %u", motor_number);
-    } else {
-        Axis& axis = axes[motor_number];
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
+    } else {        
         axis.controller_.config_.control_mode = Controller::CONTROL_MODE_POSITION_CONTROL;
         axis.controller_.input_pos_ = pos_setpoint;
         if (numscan >= 3)
@@ -183,15 +189,19 @@ void AsciiProtocol::cmd_set_position_wl(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_set_velocity(char * pStr, bool use_checksum) {
-    unsigned motor_number;
+    unsigned node_id;
     float vel_setpoint, torque_feed_forward;
-    int numscan = sscanf(pStr, "v %u %f %f", &motor_number, &vel_setpoint, &torque_feed_forward);
+
+    int numscan = sscanf(pStr, "v %u %f %f", &node_id, &vel_setpoint, &torque_feed_forward);
+    
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
     if (numscan < 2) {
-        respond(use_checksum, "invalid command format");
-    } else if (motor_number >= AXIS_COUNT) {
-        respond(use_checksum, "invalid motor %u", motor_number);
-    } else {
-        Axis& axis = axes[motor_number];
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
+    } else {       
         axis.controller_.config_.control_mode = Controller::CONTROL_MODE_VELOCITY_CONTROL;
         axis.controller_.input_vel_ = vel_setpoint;
         if (numscan >= 3)
@@ -205,15 +215,19 @@ void AsciiProtocol::cmd_set_velocity(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_set_torque(char * pStr, bool use_checksum) {
-    unsigned motor_number;
+    unsigned node_id;
     float torque_setpoint;
 
-    if (sscanf(pStr, "c %u %f", &motor_number, &torque_setpoint) < 2) {
-        respond(use_checksum, "invalid command format");
-    } else if (motor_number >= AXIS_COUNT) {
-        respond(use_checksum, "invalid motor %u", motor_number);
-    } else {
-        Axis& axis = axes[motor_number];
+    int numscan = sscanf(pStr, "c %u %f", &node_id, &torque_setpoint);
+    
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
+    if (numscan < 2) {
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
+    } else {       
         axis.controller_.config_.control_mode = Controller::CONTROL_MODE_TORQUE_CONTROL;
         axis.controller_.input_torque_ = torque_setpoint;
         axis.watchdog_feed();
@@ -225,24 +239,29 @@ void AsciiProtocol::cmd_set_torque(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_encoder(char * pStr, bool use_checksum) {
+    unsigned node_id;
+    int encoder_count;
+
+    //!!!! 此处需测试，移位是否正确(移动到空格之后)
+    char *pStr2 = pStr + 2; // Substring two characters to the right (ok because we have guaranteed null termination after all chars)
+    int numscan = sscanf(pStr2, "l %u %i", &node_id, &encoder_count);
+
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
     if (pStr[1] == 's') {
-        pStr += 2; // Substring two characters to the right (ok because we have guaranteed null termination after all chars)
-
-        unsigned motor_number;
-        int encoder_count;
-
-        if (sscanf(pStr, "l %u %i", &motor_number, &encoder_count) < 2) {
-            respond(use_checksum, "invalid command format");
-        } else if (motor_number >= AXIS_COUNT) {
-            respond(use_checksum, "invalid motor %u", motor_number);
-        } else {
-            Axis& axis = axes[motor_number];
+        // pStr += 2;            
+        if (numscan < 2) {
+            respond(use_checksum, "%u %255s", node_id, "invalid command format");
+        } else {            
             axis.encoder_.set_linear_count(encoder_count);
             axis.watchdog_feed();
-            respond(use_checksum, "encoder set to %u", encoder_count);
+            respond(use_checksum, "%u encoder set to %u", node_id, encoder_count);
         }
     } else {
-        respond(use_checksum, "invalid command format");
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
     }
 }
 
@@ -251,15 +270,19 @@ void AsciiProtocol::cmd_encoder(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_set_trapezoid_trajectory(char* pStr, bool use_checksum) {
-    unsigned motor_number;
+    unsigned node_id;
     float goal_point;
 
-    if (sscanf(pStr, "t %u %f", &motor_number, &goal_point) < 2) {
-        respond(use_checksum, "invalid command format");
-    } else if (motor_number >= AXIS_COUNT) {
-        respond(use_checksum, "invalid motor %u", motor_number);
-    } else {
-        Axis& axis = axes[motor_number];
+    int numscan = sscanf(pStr, "t %u %f", &node_id, &goal_point);
+    
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
+    if (numscan < 2) {
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
+    } else {        
         axis.controller_.config_.input_mode = Controller::INPUT_MODE_TRAP_TRAJ;
         axis.controller_.config_.control_mode = Controller::CONTROL_MODE_POSITION_CONTROL;
         axis.controller_.input_pos_ = goal_point;
@@ -273,15 +296,20 @@ void AsciiProtocol::cmd_set_trapezoid_trajectory(char* pStr, bool use_checksum) 
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_get_feedback(char * pStr, bool use_checksum) {
-    unsigned motor_number;
+    unsigned node_id;
 
-    if (sscanf(pStr, "f %u", &motor_number) < 1) {
-        respond(use_checksum, "invalid command format");
-    } else if (motor_number >= AXIS_COUNT) {
-        respond(use_checksum, "invalid motor %u", motor_number);
-    } else {
-        Axis& axis = axes[motor_number];
-        respond(use_checksum, "%f %f",
+    int numscan = sscanf(pStr, "f %u", &node_id);
+
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
+    if (numscan < 1) {
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
+    }else {        
+        respond(use_checksum, "%u %f %f",
+                node_id,
                 (double)axis.encoder_.pos_estimate_.any().value_or(0.0f),
                 (double)axis.encoder_.vel_estimate_.any().value_or(0.0f));
     }
@@ -291,23 +319,31 @@ void AsciiProtocol::cmd_get_feedback(char * pStr, bool use_checksum) {
 // @param pStr buffer of ASCII encoded values
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
-void AsciiProtocol::cmd_help(char * pStr, bool use_checksum) {
-    (void)pStr;
-    respond(use_checksum, "Please see documentation for more details");
-    respond(use_checksum, "");
-    respond(use_checksum, "Available commands syntax reference:");
-    respond(use_checksum, "Position: q axis pos vel-lim I-lim");
-    respond(use_checksum, "Position: p axis pos vel-ff I-ff");
-    respond(use_checksum, "Velocity: v axis vel I-ff");
-    respond(use_checksum, "Torque: c axis T");
-    respond(use_checksum, "");
-    respond(use_checksum, "Properties start at odrive root, such as axis0.requested_state");
-    respond(use_checksum, "Read: r property");
-    respond(use_checksum, "Write: w property value");
-    respond(use_checksum, "");
-    respond(use_checksum, "Save config: ss");
-    respond(use_checksum, "Erase config: se");
-    respond(use_checksum, "Reboot: sr");
+void AsciiProtocol::cmd_help(char * pStr, bool use_checksum) {   
+    unsigned node_id;
+
+    int numscan = sscanf(pStr, "h %u", &node_id);
+    
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
+    respond(use_checksum, "%u %255s", node_id, "Please see documentation for more details");
+    respond(use_checksum, "%u %255s", node_id, "");
+    respond(use_checksum, "%u %255s", node_id, "Available commands syntax reference:");
+    respond(use_checksum, "%u %255s", node_id, "Position: q axis pos vel-lim I-lim");
+    respond(use_checksum, "%u %255s", node_id, "Position: p axis pos vel-ff I-ff");
+    respond(use_checksum, "%u %255s", node_id, "Velocity: v axis vel I-ff");
+    respond(use_checksum, "%u %255s", node_id, "Torque: c axis T");
+    respond(use_checksum, "%u %255s", node_id, "");
+    respond(use_checksum, "%u %255s", node_id, "Properties start at odrive root, such as axis0.requested_state");
+    respond(use_checksum, "%u %255s", node_id, "Read: r property");
+    respond(use_checksum, "%u %255s", node_id, "Write: w property value");
+    respond(use_checksum, "%u %255s", node_id, "");
+    respond(use_checksum, "%u %255s", node_id, "Save config: ss");
+    respond(use_checksum, "%u %255s", node_id, "Erase config: se");
+    respond(use_checksum, "%u %255s", node_id, "Reboot: sr");
 }
 
 // @brief Gets the hardware, firmware and serial details
@@ -315,12 +351,20 @@ void AsciiProtocol::cmd_help(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_info_dump(char * pStr, bool use_checksum) {
+    unsigned node_id;
+
+    int numscan = sscanf(pStr, "i %u", &node_id);
+    
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
     // respond(use_checksum, "Signature: %#x", STM_ID_GetSignature());
     // respond(use_checksum, "Revision: %#x", STM_ID_GetRevision());
     // respond(use_checksum, "Flash Size: %#x KiB", STM_ID_GetFlashSize());
-    respond(use_checksum, "Hardware version: %d.%d-%dV", odrv.hw_version_major_, odrv.hw_version_minor_, odrv.hw_version_variant_);
-    respond(use_checksum, "Firmware version: %d.%d.%d", odrv.fw_version_major_, odrv.fw_version_minor_, odrv.fw_version_revision_);
-    respond(use_checksum, "Serial number: %s", serial_number_str);
+    respond(use_checksum, "%u Hardware version: %d.%d-%dV", node_id, odrv.hw_version_major_, odrv.hw_version_minor_, odrv.hw_version_variant_);
+    respond(use_checksum, "%u Firmware version: %d.%d.%d", node_id, odrv.fw_version_major_, odrv.fw_version_minor_, odrv.fw_version_revision_);
+    respond(use_checksum, "%u Serial number: %s", node_id, serial_number_str);
 }
 
 // @brief Executes the system control command
@@ -328,6 +372,17 @@ void AsciiProtocol::cmd_info_dump(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_system_ctrl(char * pStr, bool use_checksum) {
+    unsigned node_id;   
+
+    //!!!! 此处需测试，移位是否正确(移动到空格之后)
+    char *pStr2 = pStr + 2; // Substring two characters to the right (ok because we have guaranteed null termination after all chars)
+    int numscan = sscanf(pStr2, "%u", &node_id);
+    
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
     switch (pStr[1])
     {
         case 's':   odrv.save_configuration();  break;  // Save config
@@ -343,19 +398,27 @@ void AsciiProtocol::cmd_system_ctrl(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_read_property(char * pStr, bool use_checksum) {
+    unsigned node_id;  
     char name[MAX_LINE_LENGTH];
 
-    if (sscanf(pStr, "r %255s", name) < 1) {
-        respond(use_checksum, "invalid command format");
+    int numscan = sscanf(pStr, "r %u %255s", &node_id, name);
+
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
+    if (numscan < 2) {
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
     } else {
         Introspectable property = root_obj.get_child(name, sizeof(name));
         const StringConvertibleTypeInfo* type_info = dynamic_cast<const StringConvertibleTypeInfo*>(property.get_type_info());
         if (!type_info) {
-            respond(use_checksum, "invalid property");
+            respond(use_checksum, "%u %255s", node_id, "invalid property");
         } else {
             char response[10];
             bool success = type_info->get_string(property, response, sizeof(response));
-            respond(use_checksum, success ? response : "not implemented");
+            respond(use_checksum, "%u %255s", node_id, (success ? response : "not implemented"));
         }
     }
 }
@@ -365,20 +428,28 @@ void AsciiProtocol::cmd_read_property(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_write_property(char * pStr, bool use_checksum) {
+    unsigned node_id;
     char name[MAX_LINE_LENGTH];
     char value[MAX_LINE_LENGTH];
 
-    if (sscanf(pStr, "w %255s %255s", name, value) < 1) {
-        respond(use_checksum, "invalid command format");
+    int numscan = sscanf(pStr, "w %u %255s %255s", &node_id, name, value);
+
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
+    if (numscan < 2) {
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
     } else {
         Introspectable property = root_obj.get_child(name, sizeof(name));
         const StringConvertibleTypeInfo* type_info = dynamic_cast<const StringConvertibleTypeInfo*>(property.get_type_info());
         if (!type_info) {
-            respond(use_checksum, "invalid property");
+            respond(use_checksum, "%u %255s", node_id, "invalid property");
         } else {
             bool success = type_info->set_string(property, value, sizeof(value));
             if (!success) {
-                respond(use_checksum, "not implemented");
+                respond(use_checksum, "%u %255s", node_id, "not implemented");
             }
         }
     }
@@ -389,14 +460,19 @@ void AsciiProtocol::cmd_write_property(char * pStr, bool use_checksum) {
 // @param response_channel reference to the stream to respond on
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_update_axis_wdg(char * pStr, bool use_checksum) {
-    unsigned motor_number;
+    unsigned node_id;
 
-    if (sscanf(pStr, "u %u", &motor_number) < 1) {
-        respond(use_checksum, "invalid command format");
-    } else if (motor_number >= AXIS_COUNT) {
-        respond(use_checksum, "invalid motor %u", motor_number);
+    int numscan = sscanf(pStr, "u %u", &node_id);
+
+    Axis& axis = axes[0];
+    if(node_id != axis.config_.uart.node_id) {        
+        return; //非当前电机，不做处理
+    }
+
+    if (numscan < 1) {
+        respond(use_checksum, "%u %255s", node_id, "invalid command format");
     } else {
-        axes[motor_number].watchdog_feed();
+        axis.watchdog_feed();
     }
 }
 
@@ -406,7 +482,8 @@ void AsciiProtocol::cmd_update_axis_wdg(char * pStr, bool use_checksum) {
 // @param use_checksum bool to indicate whether a checksum is required on response
 void AsciiProtocol::cmd_unknown(char * pStr, bool use_checksum) {
     (void)pStr;
-    respond(use_checksum, "unknown command");
+    Axis& axis = axes[0];
+    respond(use_checksum, "%u %255s", axis.config_.uart.node_id, "unknown command");
 }
 
 void AsciiProtocol::on_read_finished(ReadResult result) {
