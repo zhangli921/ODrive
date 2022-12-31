@@ -42,7 +42,7 @@ void Encoder::setup() {
     spi_task_.config = {
         .Mode = SPI_MODE_MASTER,
         .Direction = SPI_DIRECTION_2LINES,
-        .DataSize = SPI_DATASIZE_16BIT,
+        .DataSize = SPI_DATASIZE_16BIT,  //!! 数据宽度为16位
         .CLKPolarity = (mode_ == MODE_SPI_ABS_AEAT || mode_ == MODE_SPI_ABS_MA732) ? SPI_POLARITY_HIGH : SPI_POLARITY_LOW, //!! 需确认设置
         .CLKPhase = SPI_PHASE_2EDGE,
         .NSS = SPI_NSS_SOFT,
@@ -55,6 +55,8 @@ void Encoder::setup() {
 
     if (mode_ == MODE_SPI_ABS_MA732) {
         abs_spi_dma_tx_[0] = 0x0000;
+    }else if(mode_ == MODE_SPI_ABS_ICMU) {  
+        abs_spi_dma_tx_[0] = 0xA600; //!! 0xA6为MU_OPCODE_SDAD_TRANSMISSION
     }
 
     if(mode_ & MODE_FLAG_ABS){
@@ -598,8 +600,8 @@ void Encoder::abs_spi_cb(bool success) {
         
         //!! IC-MU编码器的数据读取与解析代码请添加到此处
         case MODE_SPI_ABS_ICMU: {
-            uint16_t rawVal = abs_spi_dma_rx_[0];  //!! 从spi读出数据
-            // pos = (rawVal >> 2) & 0x3fff;   //!! 此处需解析读到的数据，并存入变量pos中
+            uint16_t rawVal = abs_spi_dma_rx_[0];  //!! 数据宽度为16位，所以直接从spi读出16位数据
+            pos = rawVal;           
         } break;
 
         default: {
