@@ -57,6 +57,7 @@ void Encoder::setup() {
         abs_spi_dma_tx_[0] = 0x0000;
     }else if(mode_ == MODE_SPI_ABS_ICMU) {  
         abs_spi_dma_tx_[0] = 0xA600; //!! 0xA6为MU_OPCODE_SDAD_TRANSMISSION
+        abs_spi_dma_tx_[1] = 0x0000;
     }
 
     if(mode_ & MODE_FLAG_ABS){
@@ -534,7 +535,7 @@ bool Encoder::abs_spi_start_transaction() {
             spi_task_.ncs_gpio = abs_spi_cs_gpio_;
             spi_task_.tx_buf = (uint8_t*)abs_spi_dma_tx_;
             spi_task_.rx_buf = (uint8_t*)abs_spi_dma_rx_;
-            spi_task_.length = 1;
+            spi_task_.length = (mode_ == MODE_SPI_ABS_ICMU) ? 2 : 1;
             spi_task_.on_complete = [](void* ctx, bool success) { ((Encoder*)ctx)->abs_spi_cb(success); };
             spi_task_.on_complete_ctx = this;
             spi_task_.next = nullptr;
@@ -600,8 +601,10 @@ void Encoder::abs_spi_cb(bool success) {
         
         //!! IC-MU编码器的数据读取与解析代码请添加到此处
         case MODE_SPI_ABS_ICMU: {
-            uint16_t rawVal = abs_spi_dma_rx_[0];  //!! 数据宽度为16位，所以直接从spi读出16位数据
-            pos = rawVal;           
+            uint8_t* data = (uint8_t*)abs_spi_dma_rx_;   //16位Half Word转为Byte，第一个Byte为Opcode
+            uint32_t angle = (data[1] << 16) | (data[2] << 8) | data[3];
+            angle >>= 8; //转为16位
+            pos = angle;
         } break;
 
         default: {
