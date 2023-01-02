@@ -113,7 +113,8 @@ void AsciiProtocol::process_line(cbufptr_t buffer) {
     if(sscanf(cmd, "n %u ", &node_id) < 1) {
         return;
     }    
-    char *cmd2 = cmd + 4; //!! 跳过节点id的4个字符
+    size_t node_id_digits = (node_id < 10) ? 1 : ((node_id < 100) ? 2 : ((node_id < 1000) ? 3 : 4));  
+    char *cmd2 = cmd + 3 + node_id_digits; //!! 跳过节点id的字符
     for (auto& axis : axes) {
         if (axis.config_.uart.node_id == node_id) {
             // check incoming packet type           
