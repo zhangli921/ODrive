@@ -42,8 +42,8 @@ void Encoder::setup() {
     spi_task_.config = {
         .Mode = SPI_MODE_MASTER,
         .Direction = SPI_DIRECTION_2LINES,
-        .DataSize = SPI_DATASIZE_16BIT,  //!! 数据宽度为16位
-        .CLKPolarity = (mode_ == MODE_SPI_ABS_AEAT || mode_ == MODE_SPI_ABS_MA732) ? SPI_POLARITY_HIGH : SPI_POLARITY_LOW, //!! 需确认设置
+        .DataSize = SPI_DATASIZE_8BIT,  //!! 数据宽度为16位
+        .CLKPolarity = SPI_POLARITY_HIGH, //!! 需确认设置
         .CLKPhase = SPI_PHASE_2EDGE,
         .NSS = SPI_NSS_SOFT,
         .BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16,
@@ -53,11 +53,14 @@ void Encoder::setup() {
         .CRCPolynomial = 10,
     };
 
-    if (mode_ == MODE_SPI_ABS_MA732) {
-        abs_spi_dma_tx_[0] = 0x0000;
-    }else if(mode_ == MODE_SPI_ABS_ICMU) {  
-        abs_spi_dma_tx_[0] = 0xA600; //!! 0xA6为MU_OPCODE_SDAD_TRANSMISSION
-        abs_spi_dma_tx_[1] = 0x0000;
+    // if (mode_ == MODE_SPI_ABS_MA732) {
+    //     abs_spi_dma_tx_[0] = 0x0000;
+    // }else 
+    if(mode_ == MODE_SPI_ABS_ICMU) {  
+        abs_spi_dma_tx_[0] = 0xA6; //!! 0xA6为MU_OPCODE_SDAD_TRANSMISSION  
+        abs_spi_dma_tx_[1] = 0x00; 
+        abs_spi_dma_tx_[2] = 0x00;   
+        abs_spi_dma_tx_[3] = 0x00;       
     }
 
     if(mode_ & MODE_FLAG_ABS){
@@ -491,12 +494,7 @@ void Encoder::sample_now() {
             sincos_sample_s_ = get_adc_relative_voltage(get_gpio(config_.sincos_gpio_pin_sin)) - 0.5f;
             sincos_sample_c_ = get_adc_relative_voltage(get_gpio(config_.sincos_gpio_pin_cos)) - 0.5f;
         } break;
-
-        case MODE_SPI_ABS_AMS:
-        case MODE_SPI_ABS_CUI:
-        case MODE_SPI_ABS_AEAT:
-        case MODE_SPI_ABS_RLS:
-        case MODE_SPI_ABS_MA732:
+       
         case MODE_SPI_ABS_ICMU:  //!! 新增ICMU
         {
             abs_spi_start_transaction();
@@ -535,7 +533,7 @@ bool Encoder::abs_spi_start_transaction() {
             spi_task_.ncs_gpio = abs_spi_cs_gpio_;
             spi_task_.tx_buf = (uint8_t*)abs_spi_dma_tx_;
             spi_task_.rx_buf = (uint8_t*)abs_spi_dma_rx_;
-            spi_task_.length = (mode_ == MODE_SPI_ABS_ICMU) ? 2 : 1;
+            spi_task_.length = 4;
             spi_task_.on_complete = [](void* ctx, bool success) { ((Encoder*)ctx)->abs_spi_cb(success); };
             spi_task_.on_complete_ctx = this;
             spi_task_.next = nullptr;
@@ -570,35 +568,7 @@ void Encoder::abs_spi_cb(bool success) {
         goto done;
     }
 
-    switch (mode_) {
-        case MODE_SPI_ABS_AMS: {
-            uint16_t rawVal = abs_spi_dma_rx_[0];
-            // check if parity is correct (even) and error flag clear
-            if (ams_parity(rawVal) || ((rawVal >> 14) & 1)) {
-                goto done;
-            }
-            pos = rawVal & 0x3fff;
-        } break;
-
-        case MODE_SPI_ABS_CUI: {
-            uint16_t rawVal = abs_spi_dma_rx_[0];
-            // check if parity is correct
-            if (cui_parity(rawVal)) {
-                goto done;
-            }
-            pos = rawVal & 0x3fff;
-        } break;
-
-        case MODE_SPI_ABS_RLS: {
-            uint16_t rawVal = abs_spi_dma_rx_[0];
-            pos = (rawVal >> 2) & 0x3fff;
-        } break;
-
-        case MODE_SPI_ABS_MA732: {
-            uint16_t rawVal = abs_spi_dma_rx_[0];
-            pos = (rawVal >> 2) & 0x3fff;
-        } break;
-        
+    switch (mode_) {   
         //!! IC-MU编码器的数据读取与解析代码请添加到此处
         case MODE_SPI_ABS_ICMU: {
             uint8_t* data = (uint8_t*)abs_spi_dma_rx_;   //16位Half Word转为Byte，第一个Byte为Opcode
@@ -738,13 +708,8 @@ bool Encoder::update() {
             delta_enc = mod(delta_enc, 6283);
             if (delta_enc > 6283/2)
                 delta_enc -= 6283;
-        } break;
-        
-        case MODE_SPI_ABS_RLS:
-        case MODE_SPI_ABS_AMS:
-        case MODE_SPI_ABS_CUI: 
-        case MODE_SPI_ABS_AEAT:
-        case MODE_SPI_ABS_MA732:
+        } break;        
+       
         case MODE_SPI_ABS_ICMU: {
             if (abs_spi_pos_updated_ == false) {
                 // Low pass filter the error
