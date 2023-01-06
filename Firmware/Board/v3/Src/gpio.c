@@ -92,14 +92,14 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(EN_GATE_GPIO_Port, EN_GATE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PCPin PCPin */
-  GPIO_InitStruct.Pin = M0_nCS_Pin|M1_nCS_Pin;
+  GPIO_InitStruct.Pin = M0_nCS_Pin/*|M1_nCS_Pin*/;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PCPin PCPin PCPin */
-  GPIO_InitStruct.Pin = M1_ENC_Z_Pin|GPIO_5_Pin|M0_ENC_Z_Pin;
+  GPIO_InitStruct.Pin = M1_ENC_Z_Pin|/*GPIO_5_Pin|*/M0_ENC_Z_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);

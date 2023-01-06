@@ -141,6 +141,8 @@ public:
     Stm32Gpio abs_spi_cs_gpio_;
     uint32_t abs_spi_cr1;
     uint32_t abs_spi_cr2;
+    //uint16_t abs_spi_dma_tx_[2] = {0xFFFF};
+    //uint16_t abs_spi_dma_rx_[2];
     uint8_t abs_spi_dma_tx_[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t abs_spi_dma_rx_[4];
     Stm32SpiArbiter::SpiTask spi_task_;

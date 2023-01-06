@@ -1589,7 +1589,7 @@ valuetypes:
       SPI_ABS_MA732:
         value: 0x104
         doc: MagAlpha MA732 magnetic encoder
-      SPI_ABS_ICMU:  #IC-MU编码器
+      SPI_ABS_ICMU:
         value: 0x105
         doc: IC-MU magnetic encoder
 

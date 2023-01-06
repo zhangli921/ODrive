@@ -531,6 +531,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM2_MspPostInit 1 */
   }
+#if 0
   else if(timHandle->Instance==TIM8)
   {
   /* USER CODE BEGIN TIM8_MspPostInit 0 */
@@ -570,7 +571,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM8_MspPostInit 1 */
   }
-
+#endif
 }
 
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
@@ -704,7 +705,7 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
     PA2     ------> TIM5_CH3
     PA3     ------> TIM5_CH4 
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_3_Pin|GPIO_4_Pin);
+//    HAL_GPIO_DeInit(GPIOA, GPIO_3_Pin|GPIO_4_Pin);
 
     /* TIM5 interrupt Deinit */
     HAL_NVIC_DisableIRQ(TIM5_IRQn);
