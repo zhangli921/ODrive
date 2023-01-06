@@ -53,6 +53,44 @@ void Encoder::setup() {
         .CRCPolynomial = 10,
     };
 
+   
+    if (Stm32SpiArbiter::acquire_task(&spi_task_)) {
+        spi_task_.ncs_gpio = abs_spi_cs_gpio_;
+        spi_task_.tx_buf = (uint8_t*)abs_spi_bits_dma_tx_;
+        spi_task_.rx_buf = nullptr;
+        spi_task_.length = 3;
+        spi_task_.on_complete = nullptr;
+        spi_task_.on_complete_ctx = this;
+        spi_task_.next = nullptr;
+        
+        spi_arbiter_->transfer_async(&spi_task_);
+    } else {
+        set_error(ERROR_ABS_SPI_NOT_READY);
+    }
+    delay_us(100);
+    Stm32SpiArbiter::release_task(&spi_task_);
+   
+    if (Stm32SpiArbiter::acquire_task(&spi_task_)) {
+        spi_task_.ncs_gpio = abs_spi_cs_gpio_;
+        spi_task_.tx_buf = (uint8_t*)abs_spi_mpc_dma_tx_;
+        spi_task_.rx_buf = nullptr;
+        spi_task_.length = 3;
+        spi_task_.on_complete = nullptr;
+        spi_task_.on_complete_ctx = this;
+        spi_task_.next = nullptr;
+        
+        spi_arbiter_->transfer_async(&spi_task_);
+    } else {
+        set_error(ERROR_ABS_SPI_NOT_READY);
+    }
+    delay_us(100);
+    Stm32SpiArbiter::release_task(&spi_task_);
+
+
+
+
+
+
     if (mode_ == MODE_SPI_ABS_MA732) {
         abs_spi_dma_tx_[0] = 0x0000;
     } else if (mode_ == MODE_SPI_ABS_ICMU) {

@@ -146,6 +146,11 @@ public:
     uint8_t abs_spi_dma_tx_[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t abs_spi_dma_rx_[4];
     Stm32SpiArbiter::SpiTask spi_task_;
+    uint8_t abs_spi_bits_dma_tx_[3] = {0xD2, 0x11, 0x86};
+    Stm32SpiArbiter::SpiTask spi_bits_configure_;
+    uint8_t abs_spi_mpc_dma_tx_[3] = {0xD2, 0x0F, 0x06}; //{0x11, 0x64};
+    Stm32SpiArbiter::SpiTask spi_mpc_configure_;
+    uint8_t abs_spi_reset_dma_tx_[3] = {0xD2, 0x75, 0x03}; //{0x11, 0x64};
 
     constexpr float getCoggingRatio(){
         return 1.0f / 3600.0f;
