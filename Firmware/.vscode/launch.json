@@ -16,7 +16,8 @@
                 "target/stm32f4x_stlink.cfg",
             ],
             "svdFile": "${workspaceRoot}/Board/v3/STM32F40x.svd",
-            "cwd": "${workspaceRoot}"
+            "cwd": "${workspaceRoot}",
+            "showDevDebugOutput": "raw"
         },
         {
             // For the Cortex-Debug extension

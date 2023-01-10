@@ -643,7 +643,7 @@ void Encoder::abs_spi_cb(bool success) {
         case MODE_SPI_ABS_ICMU: {
             uint8_t* data = (uint8_t*)abs_spi_dma_rx_;
             uint32_t angle = (data[1] << 16) | (data[2] << 8) | data[3];
-            angle >>= 8;
+            angle >>= 13;
             pos = angle;
         } break;
         default: {
