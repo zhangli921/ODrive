@@ -534,9 +534,7 @@ static void rtos_main(void*) {
 
     // Set up the CS pins for absolute encoders (TODO: move to GPIO init switch statement)
     for(auto& axis : axes){
-        if(axis.encoder_.config_.mode & Encoder::MODE_FLAG_ABS){
-            axis.encoder_.abs_spi_cs_pin_init();
-        }
+        axis.encoder_.abs_spi_cs_pin_init(); //初始化片选        
     }
 
     // Try to initialized gate drivers for fault-free startup.

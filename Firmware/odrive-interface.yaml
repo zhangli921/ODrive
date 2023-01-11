@@ -1270,7 +1270,7 @@ interfaces:
         type: readonly float32
         unit: counts
         doc: Circular position delta of the encoder in the most recent loop. Primarily for debug purposes, it indicates much the encoder changed since the last time it was checked.
-      hall_state: readonly uint8
+      # hall_state: readonly uint8
       vel_estimate: 
         type: readonly float32
         c_getter: vel_estimate_.any().value_or(0.0f)
@@ -1336,17 +1336,17 @@ interfaces:
               The speed the motor turns during encoder offset calibration.
               This is in the electrical frame, so a 7pp motor rotating 1 mechanical revolution in 2 sec would be set to `(7 * 2*pi) / 2`
             default: 4pi rad/s
-          ignore_illegal_hall_state: 
-            type: bool
-            doc: Ignore the error "Illegal Hall State"
-          hall_polarity: uint8
-          hall_polarity_calibrated: bool
-          sincos_gpio_pin_sin:
-            type: uint16
-            doc: Analog sine signal of a sin/cos encoder. The corresponding GPIO must be in `GPIO_MODE_ANALOG_IN`.
-          sincos_gpio_pin_cos:
-            type: uint16
-            doc: Analog cosine signal of a sin/cos encoder. The corresponding GPIO must be in `GPIO_MODE_ANALOG_IN`.
+          # ignore_illegal_hall_state: 
+          #   type: bool
+          #   doc: Ignore the error "Illegal Hall State"
+          # hall_polarity: uint8
+          # hall_polarity_calibrated: bool
+          # sincos_gpio_pin_sin:
+          #   type: uint16
+          #   doc: Analog sine signal of a sin/cos encoder. The corresponding GPIO must be in `GPIO_MODE_ANALOG_IN`.
+          # sincos_gpio_pin_cos:
+          #   type: uint16
+          #   doc: Analog cosine signal of a sin/cos encoder. The corresponding GPIO must be in `GPIO_MODE_ANALOG_IN`.
     functions:
       set_linear_count:
         in:
