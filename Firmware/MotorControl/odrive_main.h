@@ -191,6 +191,7 @@ public:
     void control_loop_cb(uint32_t timestamp);
 
     Axis& get_axis(int num) { return axes[num]; }
+    Encoder& get_encoder(int num) { return encoders[num]; }
 
     uint32_t get_interrupt_status(int32_t irqn);
     uint32_t get_dma_status(uint8_t stream_num);

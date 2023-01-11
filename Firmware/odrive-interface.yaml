@@ -1457,6 +1457,8 @@ interfaces:
           gpio4_pwm_mapping: {type: ODrive.Endpoint, c_name: 'pwm_mappings[3]', doc: Make sure the corresponding GPIO is in `GPIO_MODE_PWM`.}
       axis0: {type: ODrive.Axis, c_name: get_axis(0)}
       axis1: {type: ODrive.Axis, c_name: get_axis(1)}
+      # encoder0: {type: ODrive.Encoder, c_name: get_encoder(0)} 
+      encoder1: {type: ODrive.Encoder, c_name: get_encoder(1)} # axis0的第二个传感器
 
 valuetypes:
   ODrive.GpioMode:

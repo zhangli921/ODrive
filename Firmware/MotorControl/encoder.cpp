@@ -42,7 +42,7 @@ void Encoder::setup() {
         .CRCPolynomial = 10,
     };
 
-   
+    //设置位数为20位（默认19位），OUT_MSB改为6,OUT_ZERO改为4
     if (Stm32SpiArbiter::acquire_task(&spi_task_)) {
         spi_task_.ncs_gpio = abs_spi_cs_gpio_;
         spi_task_.tx_buf = (uint8_t*)abs_spi_bits_dma_tx_;
@@ -58,7 +58,8 @@ void Encoder::setup() {
     }
     delay_us(100);
     Stm32SpiArbiter::release_task(&spi_task_);
-   
+    
+    //将编码器极数改为64对（默认为32对）
     if (Stm32SpiArbiter::acquire_task(&spi_task_)) {
         spi_task_.ncs_gpio = abs_spi_cs_gpio_;
         spi_task_.tx_buf = (uint8_t*)abs_spi_mpc_dma_tx_;
