@@ -92,28 +92,24 @@ Motor motors[AXIS_COUNT] = {
         motor_thermistors[1]
     }
 };
-/** 编码器0、1为axis0使用，2为axis1使用。当前encoders[2]事实上处于无用的状态，后续encoders的各项操作只会更新前2项  */ 
-Encoder encoders[AXIS_COUNT + 1] = {
-    {   //axis0的第一个编码器
+
+Encoder encoders[AXIS_COUNT] = {
+    {
         // &htim3, // timer
         {M0_ENC_Z_GPIO_Port, M0_ENC_Z_Pin}, // index_gpio
         // {M0_ENC_A_GPIO_Port, M0_ENC_A_Pin}, // hallA_gpio
         // {M0_ENC_B_GPIO_Port, M0_ENC_B_Pin}, // hallB_gpio
         // {M0_ENC_Z_GPIO_Port, M0_ENC_Z_Pin}, // hallC_gpio
         &spi3_arbiter // spi_arbiter
-    },  
-    {   //axis0的第二个编码器
-        {M0_ENC_Z_GPIO_Port, M0_ENC_Z_Pin}, // index_gpio        
-        &spi3_arbiter // spi_arbiter
-    }, 
-    {   //axis1编码器
+    },
+    {
         // &htim4, // timer
         {M1_ENC_Z_GPIO_Port, M1_ENC_Z_Pin}, // index_gpio
         // {M1_ENC_A_GPIO_Port, M1_ENC_A_Pin}, // hallA_gpio
         // {M1_ENC_B_GPIO_Port, M1_ENC_B_Pin}, // hallB_gpio
         // {M1_ENC_Z_GPIO_Port, M1_ENC_Z_Pin}, // hallC_gpio
         &spi3_arbiter // spi_arbiter
-    }    
+    }
 };
 
 // TODO: this has no hardware dependency and should be allocated depending on config
@@ -148,7 +144,7 @@ std::array<Axis, AXIS_COUNT> axes{{
         4, // dir_gpio_pin
 #endif
         osPriorityHigh, // thread_priority
-        encoders[2], // encoder
+        encoders[1], // encoder
         sensorless_estimators[1], // sensorless_estimator
         controllers[1], // controller
         motors[1], // motor
