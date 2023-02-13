@@ -62,12 +62,7 @@ enum EncoderMode {
     ENCODER_MODE_INCREMENTAL                 = 0,
     ENCODER_MODE_HALL                        = 1,
     ENCODER_MODE_SINCOS                      = 2,
-    ENCODER_MODE_SPI_ABS_CUI                 = 256,
-    ENCODER_MODE_SPI_ABS_AMS                 = 257,
-    ENCODER_MODE_SPI_ABS_AEAT                = 258,
-    ENCODER_MODE_SPI_ABS_RLS                 = 259,
-    ENCODER_MODE_SPI_ABS_MA732               = 260,
-    ENCODER_MODE_SPI_ABS_ICMU                = 261,
+    ENCODER_MODE_SPI_ABS_ICMU                = 3,
 };
 
 // ODrive.Controller.ControlMode
