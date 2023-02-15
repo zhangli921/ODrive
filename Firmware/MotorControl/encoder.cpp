@@ -42,8 +42,8 @@ void Encoder::setup() {
     spi_task_.config = {
         .Mode = SPI_MODE_MASTER,
         .Direction = SPI_DIRECTION_2LINES,
-        .DataSize = SPI_DATASIZE_16BIT,
-        .CLKPolarity = (mode_ == MODE_SPI_ABS_AEAT || mode_ == MODE_SPI_ABS_MA732) ? SPI_POLARITY_HIGH : SPI_POLARITY_LOW,
+        .DataSize = SPI_DATASIZE_8BIT, //SPI_DATASIZE_16BIT,
+        .CLKPolarity = (mode_ == MODE_SPI_ABS_AEAT || mode_ == MODE_SPI_ABS_MA732 || mode_ == MODE_SPI_ABS_ICMU) ? SPI_POLARITY_HIGH : SPI_POLARITY_LOW,
         .CLKPhase = SPI_PHASE_2EDGE,
         .NSS = SPI_NSS_SOFT,
         .BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16,
@@ -53,8 +53,45 @@ void Encoder::setup() {
         .CRCPolynomial = 10,
     };
 
+    if (Stm32SpiArbiter::acquire_task(&spi_task_)) {
+        spi_task_.ncs_gpio = abs_spi_cs_gpio_;
+        spi_task_.tx_buf = (uint8_t*)abs_spi_bits_dma_tx_;
+        spi_task_.rx_buf = nullptr;
+        spi_task_.length = 3;
+        spi_task_.on_complete = nullptr;
+        spi_task_.on_complete_ctx = this;
+        spi_task_.next = nullptr;
+
+        spi_arbiter_->transfer_async(&spi_task_);
+    } else {
+        set_error(ERROR_ABS_SPI_NOT_READY);
+    }
+    delay_us(100);
+    Stm32SpiArbiter::release_task(&spi_task_);
+
+    if (Stm32SpiArbiter::acquire_task(&spi_task_)) {
+        spi_task_.ncs_gpio = abs_spi_cs_gpio_;
+        spi_task_.tx_buf = (uint8_t*)abs_spi_mpc_dma_tx_;
+        spi_task_.rx_buf = nullptr;
+        spi_task_.length = 3;
+        spi_task_.on_complete = nullptr;
+        spi_task_.on_complete_ctx = this;
+        spi_task_.next = nullptr;
+
+        spi_arbiter_->transfer_async(&spi_task_);
+    } else {
+        set_error(ERROR_ABS_SPI_NOT_READY);
+    }
+    delay_us(100);
+    Stm32SpiArbiter::release_task(&spi_task_);
+
     if (mode_ == MODE_SPI_ABS_MA732) {
         abs_spi_dma_tx_[0] = 0x0000;
+    } else if (mode_ == MODE_SPI_ABS_ICMU) {
+        abs_spi_dma_tx_[0] = 0xA6;
+        abs_spi_dma_tx_[1] = 0xFF;
+        abs_spi_dma_tx_[2] = 0xFF;
+        abs_spi_dma_tx_[3] = 0xFF;
     }
 
     if(mode_ & MODE_FLAG_ABS){
@@ -494,6 +531,7 @@ void Encoder::sample_now() {
         case MODE_SPI_ABS_AEAT:
         case MODE_SPI_ABS_RLS:
         case MODE_SPI_ABS_MA732:
+        case MODE_SPI_ABS_ICMU:
         {
             abs_spi_start_transaction();
             // Do nothing
@@ -531,7 +569,7 @@ bool Encoder::abs_spi_start_transaction() {
             spi_task_.ncs_gpio = abs_spi_cs_gpio_;
             spi_task_.tx_buf = (uint8_t*)abs_spi_dma_tx_;
             spi_task_.rx_buf = (uint8_t*)abs_spi_dma_rx_;
-            spi_task_.length = 1;
+            spi_task_.length = (mode_ == MODE_SPI_ABS_ICMU) ? 4 : 1;
             spi_task_.on_complete = [](void* ctx, bool success) { ((Encoder*)ctx)->abs_spi_cb(success); };
             spi_task_.on_complete_ctx = this;
             spi_task_.next = nullptr;
@@ -593,6 +631,13 @@ void Encoder::abs_spi_cb(bool success) {
         case MODE_SPI_ABS_MA732: {
             uint16_t rawVal = abs_spi_dma_rx_[0];
             pos = (rawVal >> 2) & 0x3fff;
+        } break;
+
+        case MODE_SPI_ABS_ICMU: {
+            uint8_t* data = (uint8_t*)abs_spi_dma_rx_;
+            uint32_t angle = (data[1] << 16) | (data[2] << 8) | data[3];
+            angle >>= 13;
+            pos = angle;
         } break;
 
         default: {
@@ -732,7 +777,8 @@ bool Encoder::update() {
         case MODE_SPI_ABS_AMS:
         case MODE_SPI_ABS_CUI: 
         case MODE_SPI_ABS_AEAT:
-        case MODE_SPI_ABS_MA732: {
+        case MODE_SPI_ABS_MA732: 
+        case MODE_SPI_ABS_ICMU: {
             if (abs_spi_pos_updated_ == false) {
                 // Low pass filter the error
                 spi_error_rate_ += current_meas_period * (1.0f - spi_error_rate_);

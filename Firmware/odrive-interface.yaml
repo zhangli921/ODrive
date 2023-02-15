@@ -1589,7 +1589,9 @@ valuetypes:
       SPI_ABS_MA732:
         value: 0x104
         doc: MagAlpha MA732 magnetic encoder
-
+      SPI_ABS_ICMU:
+        value: 0x105
+        doc: IC-MU magnetic encoder
   ODrive.Controller.ControlMode:
     values:
       # Note: these should be sorted from lowest level of control to
