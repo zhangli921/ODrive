@@ -428,8 +428,10 @@ static bool fetch_and_reset_adcs(
     vbus_sense_adc_cb(ADC1->JDR1);
 
     if (m0_gate_driver.is_ready()) {
-        std::optional<float> phB = motors[0].phase_current_from_adcval(ADC2->JDR1);
-        std::optional<float> phC = motors[0].phase_current_from_adcval(ADC3->JDR1);
+        // std::optional<float> phB = motors[0].phase_current_from_adcval(ADC2->JDR1);
+        // std::optional<float> phC = motors[0].phase_current_from_adcval(ADC3->JDR1);
+        std::optional<float> phC = motors[0].phase_current_from_adcval(ADC2->JDR1);
+        std::optional<float> phB = motors[0].phase_current_from_adcval(ADC3->JDR1);
         if (phB.has_value() && phC.has_value()) {
             *current0 = {-*phB - *phC, *phB, *phC};
         }
