@@ -520,24 +520,24 @@ void Axis::run_state_machine_loop() {
                     encoder_.apply_config(motor_.config_.motor_type);
             } break;
 
-            case AXIS_STATE_ENCODER_HALL_POLARITY_CALIBRATION: {
-                if (!motor_.is_calibrated_)
-                    goto invalid_state_label;
+            // case AXIS_STATE_ENCODER_HALL_POLARITY_CALIBRATION: {
+            //     if (!motor_.is_calibrated_)
+            //         goto invalid_state_label;
 
-                status = encoder_.run_hall_polarity_calibration();
-            } break;
+            //     status = encoder_.run_hall_polarity_calibration();
+            // } break;
 
-            case AXIS_STATE_ENCODER_HALL_PHASE_CALIBRATION: {
-                if (!motor_.is_calibrated_)
-                    goto invalid_state_label;
+            // case AXIS_STATE_ENCODER_HALL_PHASE_CALIBRATION: {
+            //     if (!motor_.is_calibrated_)
+            //         goto invalid_state_label;
 
-                if (!encoder_.config_.hall_polarity_calibrated) {
-                    encoder_.set_error(ODriveIntf::EncoderIntf::ERROR_HALL_NOT_CALIBRATED_YET);
-                    goto invalid_state_label;
-                }
+            //     if (!encoder_.config_.hall_polarity_calibrated) {
+            //         encoder_.set_error(ODriveIntf::EncoderIntf::ERROR_HALL_NOT_CALIBRATED_YET);
+            //         goto invalid_state_label;
+            //     }
 
-                status = encoder_.run_hall_phase_calibration();
-            } break;
+            //     status = encoder_.run_hall_phase_calibration();
+            // } break;
 
             case AXIS_STATE_HOMING: {
                 //if (odrv.any_error())

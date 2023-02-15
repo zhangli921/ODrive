@@ -11,11 +11,7 @@ class Encoder;
 
 
 class Encoder : public ODriveIntf::EncoderIntf {
-public:
-    static constexpr uint32_t MODE_FLAG_ABS = 0x100;
-    static constexpr std::array<float, 6> hall_edge_defaults = 
-        {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
-
+public:      
     struct Config_t {
         Mode mode = MODE_INCREMENTAL;
         float calib_range = 0.02f; // Accuracy required to pass encoder cpr check
@@ -36,13 +32,12 @@ public:
         bool use_index_offset = true;
         bool enable_phase_interpolation = true; // Use velocity to interpolate inside the count state
         bool find_idx_on_lockin_only = false; // Only be sensitive during lockin scan constant vel state
-        bool ignore_illegal_hall_state = false; // dont error on bad states like 000 or 111
-        uint8_t hall_polarity = 0;
-        bool hall_polarity_calibrated = false;
-        std::array<float, 6> hall_edge_phcnt = hall_edge_defaults;
+        // bool ignore_illegal_hall_state = false; // dont error on bad states like 000 or 111
+        // uint8_t hall_polarity = 0;
+        // bool hall_polarity_calibrated = false;       
         uint16_t abs_spi_cs_gpio_pin = 1;
-        uint16_t sincos_gpio_pin_sin = 3;
-        uint16_t sincos_gpio_pin_cos = 4;
+        // uint16_t sincos_gpio_pin_sin = 3;
+        // uint16_t sincos_gpio_pin_cos = 4;
 
 
         // custom setters
@@ -54,8 +49,7 @@ public:
         void set_bandwidth(float value) { bandwidth = value; parent->update_pll_gains(); }
     };
 
-    Encoder(TIM_HandleTypeDef* timer, Stm32Gpio index_gpio,
-            Stm32Gpio hallA_gpio, Stm32Gpio hallB_gpio, Stm32Gpio hallC_gpio,
+    Encoder(Stm32Gpio index_gpio,
             Stm32SpiArbiter* spi_arbiter);
     
     bool apply_config(ODriveIntf::MotorIntf::MotorType motor_type);
@@ -74,20 +68,20 @@ public:
 
     bool run_index_search();
     bool run_direction_find();
-    bool run_hall_polarity_calibration();
-    bool run_hall_phase_calibration();
+    // bool run_hall_polarity_calibration();
+    // bool run_hall_phase_calibration();
     bool run_offset_calibration();
     void sample_now();
-    bool read_sampled_gpio(Stm32Gpio gpio);
-    void decode_hall_samples();
-    int32_t hall_model(float internal_pos);
+    // bool read_sampled_gpio(Stm32Gpio gpio);
+    // void decode_hall_samples();
+    // int32_t hall_model(float internal_pos);
     bool update();
 
-    TIM_HandleTypeDef* timer_;
+    // TIM_HandleTypeDef* timer_;
     Stm32Gpio index_gpio_;
-    Stm32Gpio hallA_gpio_;
-    Stm32Gpio hallB_gpio_;
-    Stm32Gpio hallC_gpio_;
+    // Stm32Gpio hallA_gpio_;
+    // Stm32Gpio hallB_gpio_;
+    // Stm32Gpio hallC_gpio_;
     Stm32SpiArbiter* spi_arbiter_;
     Axis* axis_ = nullptr; // set by Axis constructor
 
@@ -118,31 +112,31 @@ public:
     bool pos_estimate_valid_ = false;
     bool vel_estimate_valid_ = false;
 
-    int16_t tim_cnt_sample_ = 0; // 
-    static const constexpr GPIO_TypeDef* ports_to_sample[] = { GPIOA, GPIOB, GPIOC };
-    uint16_t port_samples_[sizeof(ports_to_sample) / sizeof(ports_to_sample[0])];
+    // int16_t tim_cnt_sample_ = 0; // 
+    // static const constexpr GPIO_TypeDef* ports_to_sample[] = { GPIOA, GPIOB, GPIOC };
+    // uint16_t port_samples_[sizeof(ports_to_sample) / sizeof(ports_to_sample[0])];
     // Updated by low_level pwm_adc_cb
-    uint8_t hall_state_ = 0x0; // bit[0] = HallA, .., bit[2] = HallC
-    std::optional<uint8_t> last_hall_cnt_ = std::nullopt; // Used to find hall edges for calibration
-    bool calibrate_hall_phase_ = false;
-    bool sample_hall_states_ = false;
-    bool sample_hall_phase_ = false;
-    std::array<int, 8> states_seen_count_; // for hall polarity calibration
-    std::array<int, 6> hall_phase_calib_seen_count_;
+    // uint8_t hall_state_ = 0x0; // bit[0] = HallA, .., bit[2] = HallC
+    // std::optional<uint8_t> last_hall_cnt_ = std::nullopt; // Used to find hall edges for calibration
+    // bool calibrate_hall_phase_ = false;
+    // bool sample_hall_states_ = false;
+    // bool sample_hall_phase_ = false;
+    // std::array<int, 8> states_seen_count_; // for hall polarity calibration
+    // std::array<int, 6> hall_phase_calib_seen_count_;
 
-    float sincos_sample_s_ = 0.0f;
-    float sincos_sample_c_ = 0.0f;
+    // float sincos_sample_s_ = 0.0f;
+    // float sincos_sample_c_ = 0.0f;
 
     bool abs_spi_start_transaction();
     void abs_spi_cb(bool success);
     void abs_spi_cs_pin_init();
     bool abs_spi_pos_updated_ = false;
-    Mode mode_ = MODE_INCREMENTAL;
+    // Mode mode_ = MODE_INCREMENTAL;
     Stm32Gpio abs_spi_cs_gpio_;
     uint32_t abs_spi_cr1;
     uint32_t abs_spi_cr2;
-    // uint16_t abs_spi_dma_tx_[1] = {0xFFFF};
-    // uint16_t abs_spi_dma_rx_[1];
+    //uint16_t abs_spi_dma_tx_[2] = {0xFFFF};
+    //uint16_t abs_spi_dma_rx_[2];
     uint8_t abs_spi_dma_tx_[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t abs_spi_dma_rx_[4];
     Stm32SpiArbiter::SpiTask spi_task_;

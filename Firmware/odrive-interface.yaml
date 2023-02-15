@@ -1270,7 +1270,7 @@ interfaces:
         type: readonly float32
         unit: counts
         doc: Circular position delta of the encoder in the most recent loop. Primarily for debug purposes, it indicates much the encoder changed since the last time it was checked.
-      hall_state: readonly uint8
+      # hall_state: readonly uint8
       vel_estimate: 
         type: readonly float32
         c_getter: vel_estimate_.any().value_or(0.0f)
@@ -1288,7 +1288,7 @@ interfaces:
       config:
         c_is_class: False
         attributes:
-          mode: Mode
+          mode: Mode #该参数暂时无用
           use_index: 
             type: bool
             c_setter: set_use_index
@@ -1336,17 +1336,17 @@ interfaces:
               The speed the motor turns during encoder offset calibration.
               This is in the electrical frame, so a 7pp motor rotating 1 mechanical revolution in 2 sec would be set to `(7 * 2*pi) / 2`
             default: 4pi rad/s
-          ignore_illegal_hall_state: 
-            type: bool
-            doc: Ignore the error "Illegal Hall State"
-          hall_polarity: uint8
-          hall_polarity_calibrated: bool
-          sincos_gpio_pin_sin:
-            type: uint16
-            doc: Analog sine signal of a sin/cos encoder. The corresponding GPIO must be in `GPIO_MODE_ANALOG_IN`.
-          sincos_gpio_pin_cos:
-            type: uint16
-            doc: Analog cosine signal of a sin/cos encoder. The corresponding GPIO must be in `GPIO_MODE_ANALOG_IN`.
+          # ignore_illegal_hall_state: 
+          #   type: bool
+          #   doc: Ignore the error "Illegal Hall State"
+          # hall_polarity: uint8
+          # hall_polarity_calibrated: bool
+          # sincos_gpio_pin_sin:
+          #   type: uint16
+          #   doc: Analog sine signal of a sin/cos encoder. The corresponding GPIO must be in `GPIO_MODE_ANALOG_IN`.
+          # sincos_gpio_pin_cos:
+          #   type: uint16
+          #   doc: Analog cosine signal of a sin/cos encoder. The corresponding GPIO must be in `GPIO_MODE_ANALOG_IN`.
     functions:
       set_linear_count:
         in:
@@ -1574,24 +1574,25 @@ valuetypes:
       INCREMENTAL:
       HALL:
       SINCOS:
-      SPI_ABS_CUI:
-        value: 0x100
-        doc: Compatible with CUI AMT23xx
-      SPI_ABS_AMS:
-        value: 0x101
-        doc: Compatible with AMS AS5047P, AS5048A/AS5048B (no daisy chain support)
-      SPI_ABS_AEAT:
-        value: 0x102
-        doc: Supports AEAT-8800
-      SPI_ABS_RLS:
-        value: 0x103
-        doc: Supports RLS Orbis Encoders
-      SPI_ABS_MA732:
-        value: 0x104
-        doc: MagAlpha MA732 magnetic encoder
       SPI_ABS_ICMU:
-        value: 0x105
-        doc: IC-MU magnetic encoder
+      # SPI_ABS_CUI:
+      #   value: 0x100
+      #   doc: Compatible with CUI AMT23xx
+      # SPI_ABS_AMS:
+      #   value: 0x101
+      #   doc: Compatible with AMS AS5047P, AS5048A/AS5048B (no daisy chain support)
+      # SPI_ABS_AEAT:
+      #   value: 0x102
+      #   doc: Supports AEAT-8800
+      # SPI_ABS_RLS:
+      #   value: 0x103
+      #   doc: Supports RLS Orbis Encoders
+      # SPI_ABS_MA732:
+      #   value: 0x104
+      #   doc: MagAlpha MA732 magnetic encoder
+      # SPI_ABS_ICMU:
+      #   value: 0x105
+      #   doc: IC-MU magnetic encoder
   ODrive.Controller.ControlMode:
     values:
       # Note: these should be sorted from lowest level of control to
